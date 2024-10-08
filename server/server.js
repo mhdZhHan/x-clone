@@ -1,5 +1,6 @@
 import express from "express"
 import dotenv from "dotenv"
+import cookieParser from "cookie-parser"
 
 import { connectDB } from "./db/connectDB.js"
 
@@ -14,6 +15,7 @@ const PORT = process.env.PORT || 5000
 
 // middlewares
 app.use(express.json())
+app.use(cookieParser())
 
 // routes
 app.use("/api/auth", authRoutes)

@@ -87,7 +87,7 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
 	try {
-        res.clearCookie("token")
+		res.clearCookie("token")
 		res.status(200).json({ message: "Logged out successfully" })
 	} catch (error) {
 		console.log("Error in logout controller", error)
@@ -95,3 +95,16 @@ export const logout = async (req, res) => {
 	}
 }
 
+export const getMe = async (req, res) => {
+	try {
+		if (!req.user) {
+			return res.status(401).json({ message: "User not authorized" })
+		}
+        
+		const user = await User.findById(req.user._id).select("-password")
+		res.status(200).json({ user })
+	} catch (error) {
+		console.log("Error in getMe controller", error)
+		res.status(500).json({ message: "Server error", error: error?.message })
+	}
+}
