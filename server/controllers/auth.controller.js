@@ -49,10 +49,8 @@ export const signup = async (req, res) => {
 			await newUser.save()
 
 			res.status(201).json({
-				user: {
-					...newUser._doc,
-					password: undefined,
-				},
+				...newUser._doc,
+				password: undefined,
 			})
 		} else {
 			res.status(400).json({ message: "Invalid user data" })
@@ -63,6 +61,37 @@ export const signup = async (req, res) => {
 	}
 }
 
-export const login = async (req, res) => {}
+export const login = async (req, res) => {
+	try {
+		const { username, password } = req.body
+		const user = await User.findOne({ username })
+		const isPasswordCorrect = await bcrypt.compare(
+			password,
+			user?.password || ""
+		)
 
-export const logout = async (req, res) => {}
+		if (!user || !isPasswordCorrect) {
+			return res
+				.status(400)
+				.json({ message: "Invalid username or password" })
+		}
+
+		generateTokenAndSetCookie(user._id, res)
+
+		res.status(200).json({ ...user._doc, password: undefined })
+	} catch (error) {
+		console.log("Error in login controller", error)
+		res.status(500).json({ message: "Server error", error: error?.message })
+	}
+}
+
+export const logout = async (req, res) => {
+	try {
+        res.clearCookie("token")
+		res.status(200).json({ message: "Logged out successfully" })
+	} catch (error) {
+		console.log("Error in logout controller", error)
+		res.status(500).json({ message: "Server error", error: error?.message })
+	}
+}
+
