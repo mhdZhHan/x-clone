@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
 		password: {
 			type: String,
 			required: true,
-			maxLength: 6,
+			minLength: 6,
 		},
 		followers: [
 			{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
