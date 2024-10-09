@@ -1,5 +1,9 @@
+import bcryptjs from "bcryptjs"
+import cloudinary from "../lib/cloudinary.js"
+
 import User from "../models/user.model.js"
 import Notification from "../models/notification.model.js"
+import { PASSWORD_REGEX } from "./auth.controller.js"
 
 export const getUserProfile = async (req, res) => {
 	try {
@@ -109,6 +113,99 @@ export const toggleFollow = async (req, res) => {
 
 export const updateUserProfile = async (req, res) => {
 	try {
+		const {
+			username,
+			fullName,
+			email,
+			currentPassword,
+			newPassword,
+			bio,
+			link,
+		} = req.body
+
+		let { profileImage, coverImage } = req.body
+
+		const userId = req.user._id
+		let user = await User.findById(userId)
+
+		if (!user) return res.status(404).json({ message: "User not found" })
+
+		// updating password
+		if (
+			(!newPassword && currentPassword) ||
+			(!currentPassword && newPassword)
+		) {
+			return res.status(400).json({
+				message:
+					"Please provide both current password and new password",
+			})
+		}
+
+		if (currentPassword && newPassword) {
+			const isMatch = await bcryptjs.compare(
+				currentPassword,
+				user.password
+			)
+
+			if (!isMatch)
+				return res
+					.status(400)
+					.json({ message: "Incorrect current password" })
+
+			if (!PASSWORD_REGEX.test(newPassword)) {
+				return res.status(400).json({
+					message:
+						"Password should be 6 to 20 characters long with a numeric,1 lowercase and 1 uppercase letters",
+				})
+			}
+
+			const salt = await bcryptjs.getSalt(10)
+			user.password = await bcryptjs.hash(newPassword, salt)
+		}
+
+		// update profile image
+		if (profileImage) {
+			// if user already have a profile image delete from cloud
+			if (user.profileImage) {
+				cloudinary.uploader.destroy(
+					user.profileImage.split("/").pop().split(".")[0]
+				)
+			}
+
+			const uploadedResponse = await cloudinary.uploader.upload(
+				profileImage
+			)
+			profileImage = uploadedResponse.secure_url
+		}
+
+		// update coverImage
+		if (coverImage) {
+			// if user already have a coverImage delete from cloud
+			if (user.coverImage) {
+				cloudinary.uploader.destroy(
+					user.coverImage.split("/").pop().split(".")[0]
+				)
+			}
+			const uploadedResponse = await cloudinary.uploader.upload(
+				coverImage
+			)
+			coverImage = uploadedResponse.secure_url
+		}
+
+		// update user profile with new values
+		user.fullName = fullName || user.fullName
+		user.email = email || user.email
+		user.username = username || user.username
+		user.profileImage = profileImage || user.profileImage
+		user.coverImage = coverImage || user.coverImage
+		user.bio = bio || user.bio
+		user.link = link || user.link
+
+		user = await user.save()
+		res.status(200).json({
+			...user._doc,
+			password: undefined,
+		})
 	} catch (error) {
 		console.log("Error in updateUserProfile controller", error)
 		res.status(500).json({ message: "Server error", error: error?.message })
