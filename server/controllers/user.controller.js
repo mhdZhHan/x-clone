@@ -1,4 +1,4 @@
-import bcryptjs from "bcryptjs"
+import bcrypt from "bcryptjs"
 import cloudinary from "../lib/cloudinary.js"
 
 import User from "../models/user.model.js"
@@ -142,7 +142,7 @@ export const updateUserProfile = async (req, res) => {
 		}
 
 		if (currentPassword && newPassword) {
-			const isMatch = await bcryptjs.compare(
+			const isMatch = await bcrypt.compare(
 				currentPassword,
 				user.password
 			)
@@ -159,8 +159,8 @@ export const updateUserProfile = async (req, res) => {
 				})
 			}
 
-			const salt = await bcryptjs.getSalt(10)
-			user.password = await bcryptjs.hash(newPassword, salt)
+			const salt = await bcrypt.genSalt(10)
+			user.password = await bcrypt.hash(newPassword, salt)
 		}
 
 		// update profile image
