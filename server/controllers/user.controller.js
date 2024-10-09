@@ -20,8 +20,34 @@ export const getUserProfile = async (req, res) => {
 
 export const getSuggestedUsers = async (req, res) => {
 	try {
+		const userId = req.user._id
+		// Find the current user in the database and select only the 'following' field
+		const usersFollowedByMe = await User.findById(userId).select(
+			"following"
+		)
+
+		// Get a random sample of 10 users excluding the current user
+		const users = await User.aggregate([
+			{ $match: { _id: { $ne: userId } } }, // Exclude current user
+			{ $sample: { size: 10 } }, // Randomly select 10 users
+			{ $project: { password: 0 } }, // Exclude the password field
+		])
+
+		// Filter out users that are already followed by the current user
+		const filteredUsers = users.filter(
+			(user) => !usersFollowedByMe.following.includes(user._id.toString())
+		)
+
+		// Slice the filtered users to get only the first 4 (for suggesting users)
+		const suggestedUsers = filteredUsers.slice(0, 4)
+
+		// For security, remove the password field from the suggested users
+		suggestedUsers.forEach((user) => (user.password = null))
+
+		// Return the suggested users as a response
+		res.status(200).json(suggestedUsers)
 	} catch (error) {
-		console.log("Error in getUserProfile controller", error)
+		console.log("Error in getSuggestedUsers controller", error)
 		res.status(500).json({ message: "Server error", error: error?.message })
 	}
 }
