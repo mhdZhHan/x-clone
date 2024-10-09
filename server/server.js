@@ -6,6 +6,7 @@ import { connectDB } from "./db/connectDB.js"
 
 // routes imports
 import authRoutes from "./routes/auth.routes.js"
+import userRoutes from "./routes/user.routes.js"
 
 dotenv.config()
 
@@ -19,6 +20,7 @@ app.use(cookieParser())
 
 // routes
 app.use("/api/auth", authRoutes)
+app.use("/api/users", userRoutes)
 
 app.listen(PORT, () => {
 	connectDB()
