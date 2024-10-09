@@ -1,4 +1,5 @@
 import User from "../models/user.model.js"
+import Notification from "../models/notification.model.js"
 
 export const getUserProfile = async (req, res) => {
 	try {
@@ -52,6 +53,7 @@ export const toggleFollow = async (req, res) => {
 				$pull: { following: id },
 			})
 
+			// TODO return the id of the user as response
 			res.status(200).json({ message: "User unfollowed successfully" })
 		} else {
 			// follow the user
@@ -63,6 +65,14 @@ export const toggleFollow = async (req, res) => {
 			})
 
 			// Send notification to the user (Who was followed)
+			const notification = new Notification({
+				type: "follow",
+				from: userToToggleFollow._id, // who was following
+				to: req.user._id, // who was followed
+			})
+			await notification.save()
+
+			// TODO return the id of the user as response
 			res.status(200).json({ message: "User followed successfully" })
 		}
 	} catch (error) {
