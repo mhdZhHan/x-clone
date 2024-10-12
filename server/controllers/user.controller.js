@@ -12,13 +12,19 @@ export const getUserProfile = async (req, res) => {
 		const user = await User.findOne({ username }).select("-password")
 
 		if (!user) {
-			return res.status(404).json({ message: "User not found" })
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" })
 		}
 
 		res.status(200).json({ user })
 	} catch (error) {
 		console.log("Error in getUserProfile controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -52,7 +58,11 @@ export const getSuggestedUsers = async (req, res) => {
 		res.status(200).json(suggestedUsers)
 	} catch (error) {
 		console.log("Error in getSuggestedUsers controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -65,12 +75,15 @@ export const toggleFollow = async (req, res) => {
 
 		// `.toString()` => must convert the object form to id string
 		if (id === req.user._id.toString())
-			return res
-				.status(400)
-				.json({ message: "You cant follow/unfollow yourself" })
+			return res.status(400).json({
+				success: false,
+				message: "You cant follow/unfollow yourself",
+			})
 
 		if (!userToToggleFollow || !currentUser)
-			return res.status(404).json({ message: "User not fount" })
+			return res
+				.status(404)
+				.json({ success: false, message: "User not fount" })
 
 		const isFollowing = currentUser.following.includes(id)
 
@@ -84,7 +97,10 @@ export const toggleFollow = async (req, res) => {
 			})
 
 			// TODO return the id of the user as response
-			res.status(200).json({ message: "User unfollowed successfully" })
+			res.status(200).json({
+				success: true,
+				message: "User unfollowed successfully",
+			})
 		} else {
 			// follow the user
 			await User.findByIdAndUpdate(id, {
@@ -103,11 +119,18 @@ export const toggleFollow = async (req, res) => {
 			await notification.save()
 
 			// TODO return the id of the user as response
-			res.status(200).json({ message: "User followed successfully" })
+			res.status(200).json({
+				success: true,
+				message: "User followed successfully",
+			})
 		}
 	} catch (error) {
 		console.log("Error in toggleFollow controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -128,7 +151,10 @@ export const updateUserProfile = async (req, res) => {
 		const userId = req.user._id
 		let user = await User.findById(userId)
 
-		if (!user) return res.status(404).json({ message: "User not found" })
+		if (!user)
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" })
 
 		// updating password
 		if (
@@ -142,15 +168,13 @@ export const updateUserProfile = async (req, res) => {
 		}
 
 		if (currentPassword && newPassword) {
-			const isMatch = await bcrypt.compare(
-				currentPassword,
-				user.password
-			)
+			const isMatch = await bcrypt.compare(currentPassword, user.password)
 
 			if (!isMatch)
-				return res
-					.status(400)
-					.json({ message: "Incorrect current password" })
+				return res.status(400).json({
+					success: false,
+					message: "Incorrect current password",
+				})
 
 			if (!PASSWORD_REGEX.test(newPassword)) {
 				return res.status(400).json({
@@ -208,6 +232,10 @@ export const updateUserProfile = async (req, res) => {
 		})
 	} catch (error) {
 		console.log("Error in updateUserProfile controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }

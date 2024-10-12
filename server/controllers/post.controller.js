@@ -17,7 +17,11 @@ export const getAllPosts = async (req, res) => {
 		res.status(200).json(posts)
 	} catch (error) {
 		console.log("Error in getAllPosts controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -25,7 +29,10 @@ export const getLikedPosts = async (req, res) => {
 	try {
 		const userId = req.params.id
 		const user = await User.findById(userId)
-		if (!user) return res.status(404).json({ message: "User not found" })
+		if (!user)
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" })
 
 		// Fetch all posts from the Post collection whose _id exists in the user's likedPosts array,
 		// populate the 'user' field (excluding the password) and the 'comments.user' field (excluding the password)
@@ -39,7 +46,11 @@ export const getLikedPosts = async (req, res) => {
 		res.status(200).json(likedPosts)
 	} catch (error) {
 		console.log("Error in getLikedPosts controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -47,7 +58,10 @@ export const getFollowingPosts = async (req, res) => {
 	try {
 		const userId = req.user._id
 		const user = await User.findById(userId)
-		if (!user) return res.status(404).json({ message: "User not found" })
+		if (!user)
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" })
 
 		const following = user.following
 
@@ -68,7 +82,11 @@ export const getFollowingPosts = async (req, res) => {
 		res.status(200).json(feedPosts)
 	} catch (error) {
 		console.log("Error in getFollowingPosts controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -76,7 +94,10 @@ export const getUserPosts = async (req, res) => {
 	try {
 		const { username } = req.params
 		const user = await User.find({ username })
-		if (!user) return res.status(404).json({ message: "User not found" })
+		if (!user)
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" })
 
 		const posts = await Post.find({ user: user._id })
 			.sort({ createdAt: -1 })
@@ -86,7 +107,11 @@ export const getUserPosts = async (req, res) => {
 		res.status(200).json(posts)
 	} catch (error) {
 		console.log("Error in getUserPosts controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -98,12 +123,16 @@ export const createPost = async (req, res) => {
 		const userId = req.user._id.toString()
 		const user = await User.findById(userId)
 
-		if (!user) return res.status(404).json({ message: "User not found" })
+		if (!user)
+			return res
+				.status(404)
+				.json({ success: false, message: "User not found" })
 
 		if (!text && !image)
-			return res
-				.status(400)
-				.json({ message: "Post must have text or image" })
+			return res.status(400).json({
+				success: false,
+				message: "Post must have text or image",
+			})
 
 		// upload image to cloudinary
 		if (image) {
@@ -121,7 +150,11 @@ export const createPost = async (req, res) => {
 		res.status(200).json(newPost)
 	} catch (error) {
 		console.log("Error in createPost controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -133,7 +166,9 @@ export const toggleLikePost = async (req, res) => {
 		const post = await Post.findById(postId)
 
 		if (!post) {
-			return res.status(404).json({ message: "Post not found" })
+			return res
+				.status(404)
+				.json({ success: false, message: "Post not found" })
 		}
 
 		const isUserLikedPost = post.likes.includes(userId)
@@ -145,7 +180,10 @@ export const toggleLikePost = async (req, res) => {
 				{ id: userId },
 				{ $pull: { likedPosts: postId } }
 			)
-			res.status(200).json({ message: "Post unliked successfully" })
+			res.status(200).json({
+				success: true,
+				message: "Post unliked successfully",
+			})
 		} else {
 			// like post
 			post.likes.push(userId)
@@ -163,11 +201,18 @@ export const toggleLikePost = async (req, res) => {
 			})
 			await notification.save()
 
-			res.status(200).json({ message: "Post liked successfully" })
+			res.status(200).json({
+				success: true,
+				message: "Post liked successfully",
+			})
 		}
 	} catch (error) {
 		console.log("Error in toggleLikePost controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -178,11 +223,16 @@ export const commentOnPost = async (req, res) => {
 		const userId = req.user._id
 
 		if (!text)
-			return res.status(400).json({ message: "Text field is required" })
+			return res
+				.status(400)
+				.json({ success: false, message: "Text field is required" })
 
 		const post = await Post.findById(postId)
 
-		if (!post) return res.status(404).json({ message: "Post not found" })
+		if (!post)
+			return res
+				.status(404)
+				.json({ success: false, message: "Post not found" })
 
 		const comment = { user: userId, text }
 		post.comments.push(comment)
@@ -191,19 +241,27 @@ export const commentOnPost = async (req, res) => {
 		res.status(200).json(post)
 	} catch (error) {
 		console.log("Error in commentOnPost controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
 export const deletePost = async (req, res) => {
 	try {
 		const post = await Post.findById(req.params.id)
-		if (!post) return res.status(404).json({ message: "Post not found" })
+		if (!post)
+			return res
+				.status(404)
+				.json({ success: false, message: "Post not found" })
 
 		if (post.user.toString() !== req.user._id.toString())
-			return res
-				.status(401)
-				.json({ message: "You are not authorized to delete this post" })
+			return res.status(401).json({
+				success: false,
+				message: "You are not authorized to delete this post",
+			})
 
 		// delete image from cloud storage
 		if (post.image) {
@@ -212,9 +270,16 @@ export const deletePost = async (req, res) => {
 		}
 
 		await Post.findByIdAndDelete(req.params.id)
-		res.status(200).json({ message: "Post deleted successfully" })
+		res.status(200).json({
+			success: true,
+			message: "Post deleted successfully",
+		})
 	} catch (error) {
 		console.log("Error in deletePost controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }

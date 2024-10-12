@@ -11,7 +11,9 @@ export const signup = async (req, res) => {
 		const { fullName, email, username, password } = req.body
 
 		if (!EMAIL_REGEX.test(email)) {
-			return res.status(400).json({ message: "Invalid email formate" })
+			return res
+				.status(400)
+				.json({ success: false, message: "Invalid email formate" })
 		}
 
 		if (!PASSWORD_REGEX.test(password)) {
@@ -23,14 +25,19 @@ export const signup = async (req, res) => {
 
 		const existingUser = await User.findOne({ username })
 		if (existingUser) {
-			return res.status(400).json({ message: "Username already taken" })
+			return res
+				.status(400)
+				.json({ success: false, message: "Username already taken" })
 		}
 
 		const existingEmail = await User.findOne({ email })
 		if (existingEmail) {
 			return res
 				.status(400)
-				.json({ message: "This email is already registered" })
+				.json({
+					success: false,
+					message: "This email is already registered",
+				})
 		}
 
 		// hash password
@@ -53,11 +60,18 @@ export const signup = async (req, res) => {
 				password: undefined,
 			})
 		} else {
-			res.status(400).json({ message: "Invalid user data" })
+			res.status(400).json({
+				success: false,
+				message: "Invalid user data",
+			})
 		}
 	} catch (error) {
 		console.log("Error in signup controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
@@ -73,7 +87,10 @@ export const login = async (req, res) => {
 		if (!user || !isPasswordCorrect) {
 			return res
 				.status(400)
-				.json({ message: "Invalid username or password" })
+				.json({
+					success: false,
+					message: "Invalid username or password",
+				})
 		}
 
 		generateTokenAndSetCookie(user._id, res)
@@ -81,30 +98,47 @@ export const login = async (req, res) => {
 		res.status(200).json({ ...user._doc, password: undefined })
 	} catch (error) {
 		console.log("Error in login controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
 export const logout = async (req, res) => {
 	try {
 		res.clearCookie("token")
-		res.status(200).json({ message: "Logged out successfully" })
+		res.status(200).json({
+			success: true,
+			message: "Logged out successfully",
+		})
 	} catch (error) {
 		console.log("Error in logout controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
 
 export const getMe = async (req, res) => {
 	try {
 		if (!req.user) {
-			return res.status(401).json({ message: "User not authorized" })
+			return res
+				.status(401)
+				.json({ success: false, message: "User not authorized" })
 		}
-        
+
 		const user = await User.findById(req.user._id).select("-password")
 		res.status(200).json({ user })
 	} catch (error) {
 		console.log("Error in getMe controller", error)
-		res.status(500).json({ message: "Server error", error: error?.message })
+		res.status(500).json({
+			success: false,
+			message: "Server error",
+			error: error?.message,
+		})
 	}
 }
