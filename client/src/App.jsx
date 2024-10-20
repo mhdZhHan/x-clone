@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
 
 import Sidebar from "./components/common/Sidebar"
 
@@ -21,6 +22,8 @@ function App() {
 				<Route path="/notifications" element={<NotificationPage />} />
 				<Route path="/profile/:username" element={<ProfilePage />} />
 			</Routes>
+
+			<Toaster />
 		</div>
 	)
 }
